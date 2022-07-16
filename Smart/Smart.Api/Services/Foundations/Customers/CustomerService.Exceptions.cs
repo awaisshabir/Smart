@@ -54,6 +54,12 @@ namespace Smart.Api.Services.Foundations.Customers
 
                 throw CreateAndLogDependencyValidationException(invalidCustomerReferenceException);
             }
+            catch (DbUpdateConcurrencyException dbUpdateConcurrencyException)
+            {
+                var lockedCustomerException = new LockedCustomerException(dbUpdateConcurrencyException);
+
+                throw CreateAndLogDependencyValidationException(lockedCustomerException);
+            }
             catch (DbUpdateException databaseUpdateException)
             {
                 var failedCustomerStorageException =
