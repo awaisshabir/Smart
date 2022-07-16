@@ -32,6 +32,6 @@ namespace Smart.Api.Services.Foundations.Customers
             });
 
         public IQueryable<Customer> RetrieveAllCustomers() =>
-            throw new System.NotImplementedException();
+            this.storageBroker.SelectAllCustomers();
     }
 }
