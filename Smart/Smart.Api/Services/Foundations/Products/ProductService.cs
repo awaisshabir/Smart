@@ -48,7 +48,7 @@ namespace Smart.Api.Services.Foundations.Products
                 return maybeProduct;
             });
 
-        public ValueTask<Product> ModifyProductAsync(Product product) =>
-            throw new NotImplementedException();
+        public async ValueTask<Product> ModifyProductAsync(Product product) =>
+            await this.storageBroker.UpdateProductAsync(product);
     }
 }
