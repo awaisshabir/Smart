@@ -167,5 +167,56 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
         }
+
+        [Fact]
+        public async Task ShouldThrowDependencyValidationExceptionOnModifyIfDbUpdateConcurrencyErrorOccursAndLogAsync()
+        {
+            // given
+            Product randomProduct = CreateRandomProduct();
+            var databaseUpdateConcurrencyException = new DbUpdateConcurrencyException();
+
+            var lockedProductException =
+                new LockedProductException(databaseUpdateConcurrencyException);
+
+            var expectedProductDependencyValidationException =
+                new ProductDependencyValidationException(lockedProductException);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Throws(databaseUpdateConcurrencyException);
+
+            // when
+            ValueTask<Product> modifyProductTask =
+                this.productService.ModifyProductAsync(randomProduct);
+
+            ProductDependencyValidationException actualProductDependencyValidationException =
+                await Assert.ThrowsAsync<ProductDependencyValidationException>(
+                    modifyProductTask.AsTask);
+
+            // then
+            actualProductDependencyValidationException.Should()
+                .BeEquivalentTo(expectedProductDependencyValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectProductByIdAsync(randomProduct.Id),
+                    Times.Never);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedProductDependencyValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.UpdateProductAsync(randomProduct),
+                    Times.Never);
+
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+        }
     }
 }
