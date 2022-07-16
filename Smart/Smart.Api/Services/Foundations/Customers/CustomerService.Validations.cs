@@ -77,6 +77,16 @@ namespace Smart.Api.Services.Foundations.Customers
             }
         }
 
+        private static void ValidateAgainstStorageCustomerOnModify(Customer inputCustomer, Customer storageCustomer)
+        {
+            Validate(
+                (Rule: IsNotSame(
+                    firstDate: inputCustomer.CreatedDate,
+                    secondDate: storageCustomer.CreatedDate,
+                    secondDateName: nameof(Customer.CreatedDate)),
+                Parameter: nameof(Customer.CreatedDate)));
+        }
+
         private static dynamic IsInvalid(Guid id) => new
         {
             Condition = id == Guid.Empty,

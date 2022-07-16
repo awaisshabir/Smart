@@ -1,62 +1,65 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
-using Force.DeepCloner;
-using Moq;
+using Smart.Api.Brokers.DateTimes;
+using Smart.Api.Brokers.Loggings;
+using Smart.Api.Brokers.Storages;
 using Smart.Api.Models.Customers;
-using Xunit;
 
-namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
+namespace Smart.Api.Services.Foundations.Customers
 {
-    public partial class CustomerServiceTests
+    public partial class CustomerService : ICustomerService
     {
-        [Fact]
-        public async Task ShouldModifyCustomerAsync()
+        private readonly IStorageBroker storageBroker;
+        private readonly IDateTimeBroker dateTimeBroker;
+        private readonly ILoggingBroker loggingBroker;
+
+        public CustomerService(
+            IStorageBroker storageBroker,
+            IDateTimeBroker dateTimeBroker,
+            ILoggingBroker loggingBroker)
         {
-            // given
-            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
-            Customer randomCustomer = CreateRandomModifyCustomer(randomDateTimeOffset);
-            Customer inputCustomer = randomCustomer;
-            Customer storageCustomer = inputCustomer.DeepClone();
-            storageCustomer.UpdatedDate = randomCustomer.CreatedDate;
-            Customer updatedCustomer = inputCustomer;
-            Customer expectedCustomer = updatedCustomer.DeepClone();
-            Guid customerId = inputCustomer.Id;
-
-            this.dateTimeBrokerMock.Setup(broker =>
-                broker.GetCurrentDateTimeOffset())
-                    .Returns(randomDateTimeOffset);
-
-            this.storageBrokerMock.Setup(broker =>
-                broker.SelectCustomerByIdAsync(customerId))
-                    .ReturnsAsync(storageCustomer);
-
-            this.storageBrokerMock.Setup(broker =>
-                broker.UpdateCustomerAsync(inputCustomer))
-                    .ReturnsAsync(updatedCustomer);
-
-            // when
-            Customer actualCustomer =
-                await this.customerService.ModifyCustomerAsync(inputCustomer);
-
-            // then
-            actualCustomer.Should().BeEquivalentTo(expectedCustomer);
-
-            this.dateTimeBrokerMock.Verify(broker =>
-                broker.GetCurrentDateTimeOffset(),
-                    Times.Once);
-
-            this.storageBrokerMock.Verify(broker =>
-                broker.SelectCustomerByIdAsync(inputCustomer.Id),
-                    Times.Once);
-
-            this.storageBrokerMock.Verify(broker =>
-                broker.UpdateCustomerAsync(inputCustomer),
-                    Times.Once);
-
-            this.storageBrokerMock.VerifyNoOtherCalls();
-            this.loggingBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.storageBroker = storageBroker;
+            this.dateTimeBroker = dateTimeBroker;
+            this.loggingBroker = loggingBroker;
         }
+
+        public ValueTask<Customer> AddCustomerAsync(Customer customer) =>
+            TryCatch(async () =>
+            {
+                ValidateCustomerOnAdd(customer);
+
+                return await this.storageBroker.InsertCustomerAsync(customer);
+            });
+
+        public IQueryable<Customer> RetrieveAllCustomers() =>
+            TryCatch(() => this.storageBroker.SelectAllCustomers());
+
+        public ValueTask<Customer> RetrieveCustomerByIdAsync(Guid customerId) =>
+            TryCatch(async () =>
+            {
+                ValidateCustomerId(customerId);
+
+                Customer maybeCustomer = await this.storageBroker
+                    .SelectCustomerByIdAsync(customerId);
+
+                ValidateStorageCustomer(maybeCustomer, customerId);
+
+                return maybeCustomer;
+            });
+
+        public ValueTask<Customer> ModifyCustomerAsync(Customer customer) =>
+            TryCatch(async () =>
+            {
+                ValidateCustomerOnModify(customer);
+
+                Customer maybeCustomer =
+                    await this.storageBroker.SelectCustomerByIdAsync(customer.Id);
+
+                ValidateStorageCustomer(maybeCustomer, customer.Id);
+                ValidateAgainstStorageCustomerOnModify(inputCustomer: customer, storageCustomer: maybeCustomer);
+
+                return await this.storageBroker.UpdateCustomerAsync(customer);
+            });
     }
 }
