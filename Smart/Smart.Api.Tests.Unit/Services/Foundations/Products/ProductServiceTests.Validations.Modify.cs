@@ -109,6 +109,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             actualProductValidationException.Should()
                 .BeEquivalentTo(expectedProductValidationException);
 
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
                     expectedProductValidationException))),
@@ -118,9 +122,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                 broker.UpdateProductAsync(It.IsAny<Product>()),
                     Times.Never);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -139,6 +143,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             var expectedProductValidationException =
                 new ProductValidationException(invalidProductException);
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             // when
             ValueTask<Product> modifyProductTask =
                 this.productService.ModifyProductAsync(invalidProduct);
@@ -151,6 +159,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             actualProductValidationException.Should()
                 .BeEquivalentTo(expectedProductValidationException);
 
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
                     expectedProductValidationException))),
@@ -160,9 +172,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                 broker.SelectProductByIdAsync(invalidProduct.Id),
                     Times.Never);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
 
         [Theory]

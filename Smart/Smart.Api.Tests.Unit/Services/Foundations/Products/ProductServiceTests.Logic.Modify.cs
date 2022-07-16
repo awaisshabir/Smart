@@ -23,6 +23,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             Product expectedProduct = updatedProduct.DeepClone();
             Guid productId = inputProduct.Id;
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             this.storageBrokerMock.Setup(broker =>
                 broker.UpdateProductAsync(inputProduct))
                     .ReturnsAsync(updatedProduct);
@@ -34,13 +38,17 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             // then
             actualProduct.Should().BeEquivalentTo(expectedProduct);
 
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
             this.storageBrokerMock.Verify(broker =>
                 broker.UpdateProductAsync(inputProduct),
                     Times.Once);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
     }
 }

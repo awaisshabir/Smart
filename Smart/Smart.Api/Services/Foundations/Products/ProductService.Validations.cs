@@ -53,7 +53,9 @@ namespace Smart.Api.Services.Foundations.Products
                     firstDate: product.UpdatedDate,
                     secondDate: product.CreatedDate,
                     secondDateName: nameof(Product.CreatedDate)),
-                Parameter: nameof(Product.UpdatedDate)));
+                Parameter: nameof(Product.UpdatedDate)),
+
+                (Rule: IsNotRecent(product.UpdatedDate), Parameter: nameof(product.UpdatedDate)));
         }
 
         public void ValidateProductId(Guid productId) =>
