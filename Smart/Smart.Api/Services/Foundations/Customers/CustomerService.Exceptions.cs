@@ -78,6 +78,13 @@ namespace Smart.Api.Services.Foundations.Customers
                     new FailedCustomerStorageException(sqlException);
                 throw CreateAndLogCriticalDependencyException(failedCustomerStorageException);
             }
+            catch (Exception exception)
+            {
+                var failedCustomerServiceException =
+                    new FailedCustomerServiceException(exception);
+
+                throw CreateAndLogServiceException(failedCustomerServiceException);
+            }
         }
 
         private CustomerValidationException CreateAndLogValidationException(Xeption exception)
