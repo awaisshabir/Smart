@@ -19,6 +19,10 @@ namespace Smart.Api.Services.Foundations.Products
             {
                 throw CreateAndLogValidationException(nullProductException);
             }
+            catch (InvalidProductException invalidProductException)
+            {
+                throw CreateAndLogValidationException(invalidProductException);
+            }
         }
 
         private ProductValidationException CreateAndLogValidationException(Xeption exception)
