@@ -35,6 +35,11 @@ namespace Smart.Api.Services.Foundations.Products
                 (Rule: IsNotRecent(product.CreatedDate), Parameter: nameof(Product.CreatedDate)));
         }
 
+        private void ValidateProductOnModify(Product product)
+        {
+            ValidateProductIsNotNull(product);
+        }
+
         public void ValidateProductId(Guid productId) =>
             Validate((Rule: IsInvalid(productId), Parameter: nameof(Product.Id)));
 
