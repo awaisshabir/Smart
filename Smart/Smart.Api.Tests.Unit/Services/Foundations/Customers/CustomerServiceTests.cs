@@ -64,6 +64,17 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
         private static DateTimeOffset GetRandomDateTimeOffset() =>
             new DateTimeRange(earliestDate: new DateTime()).GetValue();
 
+        private static Customer CreateRandomModifyCustomer(DateTimeOffset dateTimeOffset)
+        {
+            int randomDaysInPast = GetRandomNegativeNumber();
+            Customer randomCustomer = CreateRandomCustomer(dateTimeOffset);
+
+            randomCustomer.CreatedDate =
+                randomCustomer.CreatedDate.AddDays(randomDaysInPast);
+
+            return randomCustomer;
+        }
+
         private static IQueryable<Customer> CreateRandomCustomers()
         {
             return CreateCustomerFiller(dateTimeOffset: GetRandomDateTimeOffset())
