@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using EFxceptions.Models.Exceptions;
 using FluentAssertions;
@@ -208,6 +209,57 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
                     expectedProductDependencyValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.UpdateProductAsync(randomProduct),
+                    Times.Never);
+
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowServiceExceptionOnModifyIfServiceErrorOccursAndLogItAsync()
+        {
+            // given
+            Product randomProduct = CreateRandomProduct();
+            var serviceException = new Exception();
+
+            var failedProductServiceException =
+                new FailedProductServiceException(serviceException);
+
+            var expectedProductServiceException =
+                new ProductServiceException(failedProductServiceException);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Throws(serviceException);
+
+            // when
+            ValueTask<Product> modifyProductTask =
+                this.productService.ModifyProductAsync(randomProduct);
+
+            ProductServiceException actualProductServiceException =
+                await Assert.ThrowsAsync<ProductServiceException>(
+                    modifyProductTask.AsTask);
+
+            // then
+            actualProductServiceException.Should()
+                .BeEquivalentTo(expectedProductServiceException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectProductByIdAsync(randomProduct.Id),
+                    Times.Never);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedProductServiceException))),
                         Times.Once);
 
             this.storageBrokerMock.Verify(broker =>
