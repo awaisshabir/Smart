@@ -30,7 +30,9 @@ namespace Smart.Api.Services.Foundations.Products
                     firstId: product.UpdatedByUserId,
                     secondId: product.CreatedByUserId,
                     secondIdName: nameof(Product.CreatedByUserId)),
-                Parameter: nameof(Product.UpdatedByUserId)));
+                Parameter: nameof(Product.UpdatedByUserId)),
+
+                (Rule: IsNotRecent(product.CreatedDate), Parameter: nameof(Product.CreatedDate)));
         }
 
         private static void ValidateProductIsNotNull(Product product)
@@ -70,6 +72,23 @@ namespace Smart.Api.Services.Foundations.Products
                 Condition = firstId != secondId,
                 Message = $"Id is not the same as {secondIdName}"
             };
+
+        private dynamic IsNotRecent(DateTimeOffset date) => new
+        {
+            Condition = IsDateNotRecent(date),
+            Message = "Date is not recent"
+        };
+
+        private bool IsDateNotRecent(DateTimeOffset date)
+        {
+            DateTimeOffset currentDateTime =
+                this.dateTimeBroker.GetCurrentDateTimeOffset();
+
+            TimeSpan timeDifference = currentDateTime.Subtract(date);
+            TimeSpan oneMinute = TimeSpan.FromMinutes(1);
+
+            return timeDifference.Duration() > oneMinute;
+        }
 
         private static void Validate(params (dynamic Rule, string Parameter)[] validations)
         {

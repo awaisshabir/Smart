@@ -27,8 +27,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                 this.productService.AddProductAsync(nullProduct);
 
             ProductValidationException actualProductValidationException =
-                await Assert.ThrowsAsync<ProductValidationException>(
-                    addProductTask.AsTask);
+                await Assert.ThrowsAsync<ProductValidationException>(() =>
+                    addProductTask.AsTask());
 
             // then
             actualProductValidationException.Should()
@@ -93,12 +93,16 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                 this.productService.AddProductAsync(invalidProduct);
 
             ProductValidationException actualProductValidationException =
-                await Assert.ThrowsAsync<ProductValidationException>(
-                    addProductTask.AsTask);
+                await Assert.ThrowsAsync<ProductValidationException>(() =>
+                    addProductTask.AsTask());
 
             // then
             actualProductValidationException.Should()
                 .BeEquivalentTo(expectedProductValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once());
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -135,17 +139,25 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             var expectedProductValidationException =
                 new ProductValidationException(invalidProductException);
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             // when
             ValueTask<Product> addProductTask =
                 this.productService.AddProductAsync(invalidProduct);
 
             ProductValidationException actualProductValidationException =
-                await Assert.ThrowsAsync<ProductValidationException>(
-                    addProductTask.AsTask);
+                await Assert.ThrowsAsync<ProductValidationException>(() =>
+                    addProductTask.AsTask());
 
             // then
             actualProductValidationException.Should()
                 .BeEquivalentTo(expectedProductValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once());
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -156,9 +168,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                 broker.InsertProductAsync(It.IsAny<Product>()),
                     Times.Never);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -180,17 +192,25 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             var expectedProductValidationException =
                 new ProductValidationException(invalidProductException);
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             // when
             ValueTask<Product> addProductTask =
                 this.productService.AddProductAsync(invalidProduct);
 
             ProductValidationException actualProductValidationException =
-                await Assert.ThrowsAsync<ProductValidationException>(
-                    addProductTask.AsTask);
+                await Assert.ThrowsAsync<ProductValidationException>(() =>
+                    addProductTask.AsTask());
 
             // then
             actualProductValidationException.Should()
                 .BeEquivalentTo(expectedProductValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once());
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -239,8 +259,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                 this.productService.AddProductAsync(invalidProduct);
 
             ProductValidationException actualProductValidationException =
-                await Assert.ThrowsAsync<ProductValidationException>(
-                    addProductTask.AsTask);
+                await Assert.ThrowsAsync<ProductValidationException>(() =>
+                    addProductTask.AsTask());
 
             // then
             actualProductValidationException.Should()
