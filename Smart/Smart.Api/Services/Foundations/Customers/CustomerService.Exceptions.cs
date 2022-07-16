@@ -19,6 +19,10 @@ namespace Smart.Api.Services.Foundations.Customers
             {
                 throw CreateAndLogValidationException(nullCustomerException);
             }
+            catch (InvalidCustomerException invalidCustomerException)
+            {
+                throw CreateAndLogValidationException(invalidCustomerException);
+            }
         }
 
         private CustomerValidationException CreateAndLogValidationException(Xeption exception)
