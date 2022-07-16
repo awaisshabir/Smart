@@ -111,5 +111,48 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
+
+        [Fact]
+        public async Task ShouldThrowDependencyExceptionOnRemoveWhenSqlExceptionOccursAndLogItAsync()
+        {
+            // given
+            Guid someCustomerId = Guid.NewGuid();
+            SqlException sqlException = GetSqlException();
+
+            var failedCustomerStorageException =
+                new FailedCustomerStorageException(sqlException);
+
+            var expectedCustomerDependencyException =
+                new CustomerDependencyException(failedCustomerStorageException);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectCustomerByIdAsync(It.IsAny<Guid>()))
+                    .ThrowsAsync(sqlException);
+
+            // when
+            ValueTask<Customer> deleteCustomerTask =
+                this.customerService.RemoveCustomerByIdAsync(someCustomerId);
+
+            CustomerDependencyException actualCustomerDependencyException =
+                await Assert.ThrowsAsync<CustomerDependencyException>(
+                    deleteCustomerTask.AsTask);
+
+            // then
+            actualCustomerDependencyException.Should()
+                .BeEquivalentTo(expectedCustomerDependencyException);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomerByIdAsync(It.IsAny<Guid>()),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogCritical(It.Is(SameExceptionAs(
+                    expectedCustomerDependencyException))),
+                        Times.Once);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
     }
 }
