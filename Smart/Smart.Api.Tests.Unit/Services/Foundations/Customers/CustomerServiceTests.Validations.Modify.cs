@@ -84,7 +84,11 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
 
             invalidCustomerException.AddData(
                 key: nameof(Customer.UpdatedDate),
-                values: "Date is required");
+                values:
+                new[] {
+                    "Date is required",
+                    $"Date is the same as {nameof(Customer.CreatedDate)}"
+                });
 
             invalidCustomerException.AddData(
                 key: nameof(Customer.UpdatedByUserId),
