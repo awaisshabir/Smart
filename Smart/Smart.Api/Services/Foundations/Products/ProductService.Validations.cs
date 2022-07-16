@@ -38,6 +38,14 @@ namespace Smart.Api.Services.Foundations.Products
         public void ValidateProductId(Guid productId) =>
             Validate((Rule: IsInvalid(productId), Parameter: nameof(Product.Id)));
 
+        private static void ValidateStorageProduct(Product maybeProduct, Guid productId)
+        {
+            if (maybeProduct is null)
+            {
+                throw new NotFoundProductException(productId);
+            }
+        }
+
         private static void ValidateProductIsNotNull(Product product)
         {
             if (product is null)

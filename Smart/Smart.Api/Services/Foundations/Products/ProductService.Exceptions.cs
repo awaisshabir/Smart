@@ -36,6 +36,10 @@ namespace Smart.Api.Services.Foundations.Products
 
                 throw CreateAndLogCriticalDependencyException(failedProductStorageException);
             }
+            catch (NotFoundProductException notFoundProductException)
+            {
+                throw CreateAndLogValidationException(notFoundProductException);
+            }
             catch (DuplicateKeyException duplicateKeyException)
             {
                 var alreadyExistsProductException =
