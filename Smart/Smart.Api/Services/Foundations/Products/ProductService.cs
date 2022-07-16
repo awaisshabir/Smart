@@ -22,7 +22,12 @@ namespace Smart.Api.Services.Foundations.Products
             this.loggingBroker = loggingBroker;
         }
 
-        public async ValueTask<Product> AddProductAsync(Product product) =>
-            await this.storageBroker.InsertProductAsync(product);
+        public ValueTask<Product> AddProductAsync(Product product) =>
+            TryCatch(async () =>
+            {
+                ValidateProductOnAdd(product);
+
+                return await this.storageBroker.InsertProductAsync(product);
+            });
     }
 }
