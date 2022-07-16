@@ -70,6 +70,8 @@ namespace Smart.Api.Services.Foundations.Products
                 Product maybeProduct = await this.storageBroker
                     .SelectProductByIdAsync(productId);
 
+                ValidateStorageProduct(maybeProduct, productId);
+
                 return await this.storageBroker.DeleteProductAsync(maybeProduct);
             });
     }
