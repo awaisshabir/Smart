@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -83,6 +84,53 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             invalidCustomerException.AddData(
                 key: nameof(Customer.UpdatedByUserId),
                 values: "Id is required");
+
+            var expectedCustomerValidationException =
+                new CustomerValidationException(invalidCustomerException);
+
+            // when
+            ValueTask<Customer> addCustomerTask =
+                this.customerService.AddCustomerAsync(invalidCustomer);
+
+            CustomerValidationException actualCustomerValidationException =
+                await Assert.ThrowsAsync<CustomerValidationException>(
+                    addCustomerTask.AsTask);
+
+            // then
+            actualCustomerValidationException.Should()
+                .BeEquivalentTo(expectedCustomerValidationException);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.InsertCustomerAsync(It.IsAny<Customer>()),
+                    Times.Never);
+
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowValidationExceptionOnAddIfCreateAndUpdateDatesIsNotSameAndLogItAsync()
+        {
+            // given
+            int randomNumber = GetRandomNumber();
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Customer randomCustomer = CreateRandomCustomer(randomDateTimeOffset);
+            Customer invalidCustomer = randomCustomer;
+
+            invalidCustomer.UpdatedDate =
+                invalidCustomer.CreatedDate.AddDays(randomNumber);
+
+            var invalidCustomerException = new InvalidCustomerException();
+
+            invalidCustomerException.AddData(
+                key: nameof(Customer.UpdatedDate),
+                values: $"Date is not the same as {nameof(Customer.CreatedDate)}");
 
             var expectedCustomerValidationException =
                 new CustomerValidationException(invalidCustomerException);
