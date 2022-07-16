@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using EFxceptions.Models.Exceptions;
 using Microsoft.Data.SqlClient;
@@ -12,6 +13,7 @@ namespace Smart.Api.Services.Foundations.Customers
     public partial class CustomerService
     {
         private delegate ValueTask<Customer> ReturningCustomerFunction();
+        private delegate IQueryable<Customer> ReturningCustomersFunction();
 
         private async ValueTask<Customer> TryCatch(ReturningCustomerFunction returningCustomerFunction)
         {
@@ -61,6 +63,20 @@ namespace Smart.Api.Services.Foundations.Customers
                     new FailedCustomerServiceException(exception);
 
                 throw CreateAndLogServiceException(failedCustomerServiceException);
+            }
+        }
+
+        private IQueryable<Customer> TryCatch(ReturningCustomersFunction returningCustomersFunction)
+        {
+            try
+            {
+                return returningCustomersFunction();
+            }
+            catch (SqlException sqlException)
+            {
+                var failedCustomerStorageException =
+                    new FailedCustomerStorageException(sqlException);
+                throw CreateAndLogCriticalDependencyException(failedCustomerStorageException);
             }
         }
 
