@@ -28,6 +28,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                     .Returns(randomDateTimeOffset);
 
             this.storageBrokerMock.Setup(broker =>
+                broker.SelectProductByIdAsync(productId))
+                    .ReturnsAsync(storageProduct);
+
+            this.storageBrokerMock.Setup(broker =>
                 broker.UpdateProductAsync(inputProduct))
                     .ReturnsAsync(updatedProduct);
 
@@ -43,12 +47,16 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                     Times.Once);
 
             this.storageBrokerMock.Verify(broker =>
+                broker.SelectProductByIdAsync(inputProduct.Id),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
                 broker.UpdateProductAsync(inputProduct),
                     Times.Once);
 
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
     }
 }

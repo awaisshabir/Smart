@@ -1,59 +1,62 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Smart.Api.Brokers.DateTimes;
-using Smart.Api.Brokers.Loggings;
-using Smart.Api.Brokers.Storages;
+using FluentAssertions;
+using Force.DeepCloner;
+using Moq;
 using Smart.Api.Models.Products;
+using Xunit;
 
-namespace Smart.Api.Services.Foundations.Products
+namespace Smart.Api.Tests.Unit.Services.Foundations.Products
 {
-    public partial class ProductService : IProductService
+    public partial class ProductServiceTests
     {
-        private readonly IStorageBroker storageBroker;
-        private readonly IDateTimeBroker dateTimeBroker;
-        private readonly ILoggingBroker loggingBroker;
-
-        public ProductService(
-            IStorageBroker storageBroker,
-            IDateTimeBroker dateTimeBroker,
-            ILoggingBroker loggingBroker)
+        [Fact]
+        public async Task ShouldModifyProductAsync()
         {
-            this.storageBroker = storageBroker;
-            this.dateTimeBroker = dateTimeBroker;
-            this.loggingBroker = loggingBroker;
+            // given
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Product randomProduct = CreateRandomModifyProduct(randomDateTimeOffset);
+            Product inputProduct = randomProduct;
+            Product storageProduct = inputProduct.DeepClone();
+            storageProduct.UpdatedDate = randomProduct.CreatedDate;
+            Product updatedProduct = inputProduct;
+            Product expectedProduct = updatedProduct.DeepClone();
+            Guid productId = inputProduct.Id;
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectProductByIdAsync(productId))
+                    .ReturnsAsync(storageProduct);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.UpdateProductAsync(inputProduct))
+                    .ReturnsAsync(updatedProduct);
+
+            // when
+            Product actualProduct =
+                await this.productService.ModifyProductAsync(inputProduct);
+
+            // then
+            actualProduct.Should().BeEquivalentTo(expectedProduct);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectProductByIdAsync(inputProduct.Id),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.UpdateProductAsync(inputProduct),
+                    Times.Once);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
-
-        public ValueTask<Product> AddProductAsync(Product product) =>
-            TryCatch(async () =>
-            {
-                ValidateProductOnAdd(product);
-
-                return await this.storageBroker.InsertProductAsync(product);
-            });
-
-        public IQueryable<Product> RetrieveAllProducts() =>
-            TryCatch(() => this.storageBroker.SelectAllProducts());
-
-        public ValueTask<Product> RetrieveProductByIdAsync(Guid productId) =>
-            TryCatch(async () =>
-            {
-                ValidateProductId(productId);
-
-                Product maybeProduct = await this.storageBroker
-                    .SelectProductByIdAsync(productId);
-
-                ValidateStorageProduct(maybeProduct, productId);
-
-                return maybeProduct;
-            });
-
-        public ValueTask<Product> ModifyProductAsync(Product product) =>
-            TryCatch(async () =>
-            {
-                ValidateProductOnModify(product);
-
-                return await this.storageBroker.UpdateProductAsync(product);
-            });
     }
 }
