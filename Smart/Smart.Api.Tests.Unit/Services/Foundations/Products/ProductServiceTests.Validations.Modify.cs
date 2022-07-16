@@ -84,7 +84,11 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
 
             invalidProductException.AddData(
                 key: nameof(Product.UpdatedDate),
-                values: "Date is required");
+                values:
+                new[] {
+                    "Date is required",
+                    $"Date is the same as {nameof(Product.CreatedDate)}"
+                });
 
             invalidProductException.AddData(
                 key: nameof(Product.UpdatedByUserId),

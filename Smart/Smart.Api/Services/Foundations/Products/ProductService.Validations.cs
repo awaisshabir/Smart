@@ -47,7 +47,13 @@ namespace Smart.Api.Services.Foundations.Products
                 (Rule: IsInvalid(product.CreatedDate), Parameter: nameof(Product.CreatedDate)),
                 (Rule: IsInvalid(product.CreatedByUserId), Parameter: nameof(Product.CreatedByUserId)),
                 (Rule: IsInvalid(product.UpdatedDate), Parameter: nameof(Product.UpdatedDate)),
-                (Rule: IsInvalid(product.UpdatedByUserId), Parameter: nameof(Product.UpdatedByUserId)));
+                (Rule: IsInvalid(product.UpdatedByUserId), Parameter: nameof(Product.UpdatedByUserId)),
+
+                (Rule: IsSame(
+                    firstDate: product.UpdatedDate,
+                    secondDate: product.CreatedDate,
+                    secondDateName: nameof(Product.CreatedDate)),
+                Parameter: nameof(Product.UpdatedDate)));
         }
 
         public void ValidateProductId(Guid productId) =>
@@ -80,6 +86,15 @@ namespace Smart.Api.Services.Foundations.Products
             Condition = date == default,
             Message = "Date is required"
         };
+
+        private static dynamic IsSame(
+            DateTimeOffset firstDate,
+            DateTimeOffset secondDate,
+            string secondDateName) => new
+            {
+                Condition = firstDate == secondDate,
+                Message = $"Date is the same as {secondDateName}"
+            };
 
         private static dynamic IsNotSame(
             DateTimeOffset firstDate,
