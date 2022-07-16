@@ -167,5 +167,56 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
         }
+
+        [Fact]
+        public async Task ShouldThrowDependencyValidationExceptionOnModifyIfDbUpdateConcurrencyErrorOccursAndLogAsync()
+        {
+            // given
+            Customer randomCustomer = CreateRandomCustomer();
+            var databaseUpdateConcurrencyException = new DbUpdateConcurrencyException();
+
+            var lockedCustomerException =
+                new LockedCustomerException(databaseUpdateConcurrencyException);
+
+            var expectedCustomerDependencyValidationException =
+                new CustomerDependencyValidationException(lockedCustomerException);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Throws(databaseUpdateConcurrencyException);
+
+            // when
+            ValueTask<Customer> modifyCustomerTask =
+                this.customerService.ModifyCustomerAsync(randomCustomer);
+
+            CustomerDependencyValidationException actualCustomerDependencyValidationException =
+                await Assert.ThrowsAsync<CustomerDependencyValidationException>(
+                    modifyCustomerTask.AsTask);
+
+            // then
+            actualCustomerDependencyValidationException.Should()
+                .BeEquivalentTo(expectedCustomerDependencyValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomerByIdAsync(randomCustomer.Id),
+                    Times.Never);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerDependencyValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.UpdateCustomerAsync(randomCustomer),
+                    Times.Never);
+
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+        }
     }
 }
