@@ -54,6 +54,12 @@ namespace Smart.Api.Services.Foundations.Products
 
                 throw CreateAndLogDependencyValidationException(invalidProductReferenceException);
             }
+            catch (DbUpdateConcurrencyException dbUpdateConcurrencyException)
+            {
+                var lockedProductException = new LockedProductException(dbUpdateConcurrencyException);
+
+                throw CreateAndLogDependencyValidationException(lockedProductException);
+            }
             catch (DbUpdateException databaseUpdateException)
             {
                 var failedProductStorageException =
