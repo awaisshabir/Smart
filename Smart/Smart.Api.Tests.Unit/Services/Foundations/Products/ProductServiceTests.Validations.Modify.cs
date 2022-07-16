@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -110,6 +111,47 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
 
             this.storageBrokerMock.Verify(broker =>
                 broker.UpdateProductAsync(It.IsAny<Product>()),
+                    Times.Never);
+
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowValidationExceptionOnModifyIfUpdatedDateIsSameAsCreatedDateAndLogItAsync()
+        {
+            // given
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Product randomProduct = CreateRandomProduct(randomDateTimeOffset);
+            Product invalidProduct = randomProduct;
+            var invalidProductException = new InvalidProductException();
+
+            invalidProductException.AddData(
+                key: nameof(Product.UpdatedDate),
+                values: $"Date is the same as {nameof(Product.CreatedDate)}");
+
+            var expectedProductValidationException =
+                new ProductValidationException(invalidProductException);
+
+            // when
+            ValueTask<Product> modifyProductTask =
+                this.productService.ModifyProductAsync(invalidProduct);
+
+            ProductValidationException actualProductValidationException =
+                await Assert.ThrowsAsync<ProductValidationException>(
+                    modifyProductTask.AsTask);
+
+            // then
+            actualProductValidationException.Should().BeEquivalentTo(expectedProductValidationException);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedProductValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectProductByIdAsync(invalidProduct.Id),
                     Times.Never);
 
             this.loggingBrokerMock.VerifyNoOtherCalls();
