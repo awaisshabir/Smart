@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -110,6 +111,47 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
 
             this.storageBrokerMock.Verify(broker =>
                 broker.UpdateCustomerAsync(It.IsAny<Customer>()),
+                    Times.Never);
+
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowValidationExceptionOnModifyIfUpdatedDateIsSameAsCreatedDateAndLogItAsync()
+        {
+            // given
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Customer randomCustomer = CreateRandomCustomer(randomDateTimeOffset);
+            Customer invalidCustomer = randomCustomer;
+            var invalidCustomerException = new InvalidCustomerException();
+
+            invalidCustomerException.AddData(
+                key: nameof(Customer.UpdatedDate),
+                values: $"Date is the same as {nameof(Customer.CreatedDate)}");
+
+            var expectedCustomerValidationException =
+                new CustomerValidationException(invalidCustomerException);
+
+            // when
+            ValueTask<Customer> modifyCustomerTask =
+                this.customerService.ModifyCustomerAsync(invalidCustomer);
+
+            CustomerValidationException actualCustomerValidationException =
+                await Assert.ThrowsAsync<CustomerValidationException>(
+                    modifyCustomerTask.AsTask);
+
+            // then
+            actualCustomerValidationException.Should().BeEquivalentTo(expectedCustomerValidationException);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomerByIdAsync(invalidCustomer.Id),
                     Times.Never);
 
             this.loggingBrokerMock.VerifyNoOtherCalls();
