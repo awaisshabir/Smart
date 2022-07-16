@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using EFxceptions.Models.Exceptions;
 using FluentAssertions;
@@ -203,6 +204,53 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
                     expectedCustomerDependencyException))),
+                        Times.Once);
+
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowServiceExceptionOnAddIfServiceErrorOccursAndLogItAsync()
+        {
+            // given
+            Customer someCustomer = CreateRandomCustomer();
+            var serviceException = new Exception();
+
+            var failedCustomerServiceException =
+                new FailedCustomerServiceException(serviceException);
+
+            var expectedCustomerServiceException =
+                new CustomerServiceException(failedCustomerServiceException);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Throws(serviceException);
+
+            // when
+            ValueTask<Customer> addCustomerTask =
+                this.customerService.AddCustomerAsync(someCustomer);
+
+            CustomerServiceException actualCustomerServiceException =
+                await Assert.ThrowsAsync<CustomerServiceException>(
+                    addCustomerTask.AsTask);
+
+            // then
+            actualCustomerServiceException.Should()
+                .BeEquivalentTo(expectedCustomerServiceException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.InsertCustomerAsync(It.IsAny<Customer>()),
+                    Times.Never);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerServiceException))),
                         Times.Once);
 
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
