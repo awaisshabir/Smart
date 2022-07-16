@@ -90,7 +90,13 @@ namespace Smart.Api.Services.Foundations.Customers
                     firstId: inputCustomer.CreatedByUserId,
                     secondId: storageCustomer.CreatedByUserId,
                     secondIdName: nameof(Customer.CreatedByUserId)),
-                Parameter: nameof(Customer.CreatedByUserId)));
+                Parameter: nameof(Customer.CreatedByUserId)),
+
+                (Rule: IsSame(
+                    firstDate: inputCustomer.UpdatedDate,
+                    secondDate: storageCustomer.UpdatedDate,
+                    secondDateName: nameof(Customer.UpdatedDate)),
+                Parameter: nameof(Customer.UpdatedDate)));
         }
 
         private static dynamic IsInvalid(Guid id) => new
