@@ -24,7 +24,13 @@ namespace Smart.Api.Services.Foundations.Products
                     firstDate: product.UpdatedDate,
                     secondDate: product.CreatedDate,
                     secondDateName: nameof(Product.CreatedDate)),
-                Parameter: nameof(Product.UpdatedDate)));
+                Parameter: nameof(Product.UpdatedDate)),
+
+                (Rule: IsNotSame(
+                    firstId: product.UpdatedByUserId,
+                    secondId: product.CreatedByUserId,
+                    secondIdName: nameof(Product.CreatedByUserId)),
+                Parameter: nameof(Product.UpdatedByUserId)));
         }
 
         private static void ValidateProductIsNotNull(Product product)
@@ -54,6 +60,15 @@ namespace Smart.Api.Services.Foundations.Products
             {
                 Condition = firstDate != secondDate,
                 Message = $"Date is not the same as {secondDateName}"
+            };
+
+        private static dynamic IsNotSame(
+            Guid firstId,
+            Guid secondId,
+            string secondIdName) => new
+            {
+                Condition = firstId != secondId,
+                Message = $"Id is not the same as {secondIdName}"
             };
 
         private static void Validate(params (dynamic Rule, string Parameter)[] validations)
