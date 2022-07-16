@@ -35,7 +35,7 @@ namespace Smart.Api.Services.Foundations.Products
         public IQueryable<Product> RetrieveAllProducts() =>
             TryCatch(() => this.storageBroker.SelectAllProducts());
 
-        public ValueTask<Product> RetrieveProductByIdAsync(Guid productId) =>
-            throw new NotImplementedException();
+        public async ValueTask<Product> RetrieveProductByIdAsync(Guid productId) =>
+            await this.storageBroker.SelectProductByIdAsync(productId);
     }
 }
