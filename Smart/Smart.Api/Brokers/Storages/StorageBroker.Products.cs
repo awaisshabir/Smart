@@ -52,5 +52,18 @@ namespace Smart.Api.Brokers.Storages
 
             return productEntityEntry.Entity;
         }
+
+        public async ValueTask<Product> DeleteProductAsync(Product product)
+        {
+            using var broker =
+                new StorageBroker(this.configuration);
+
+            EntityEntry<Product> productEntityEntry =
+                broker.Products.Remove(product);
+
+            await broker.SaveChangesAsync();
+
+            return productEntityEntry.Entity;
+        }
     }
 }
