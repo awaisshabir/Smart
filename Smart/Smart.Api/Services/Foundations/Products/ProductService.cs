@@ -32,6 +32,6 @@ namespace Smart.Api.Services.Foundations.Products
             });
 
         public IQueryable<Product> RetrieveAllProducts() =>
-            throw new System.NotImplementedException();
+            this.storageBroker.SelectAllProducts();
     }
 }
