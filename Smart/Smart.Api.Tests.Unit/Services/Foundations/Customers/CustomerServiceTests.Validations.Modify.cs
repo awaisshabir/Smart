@@ -106,7 +106,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                     modifyCustomerTask.AsTask);
 
             //then
-            actualCustomerValidationException.Should().BeEquivalentTo(expectedCustomerValidationException);
+            actualCustomerValidationException.Should()
+                .BeEquivalentTo(expectedCustomerValidationException);
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -147,7 +148,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                     modifyCustomerTask.AsTask);
 
             // then
-            actualCustomerValidationException.Should().BeEquivalentTo(expectedCustomerValidationException);
+            actualCustomerValidationException.Should()
+                .BeEquivalentTo(expectedCustomerValidationException);
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -161,6 +163,58 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Theory]
+        [MemberData(nameof(MinutesBeforeOrAfter))]
+        public async Task ShouldThrowValidationExceptionOnModifyIfUpdatedDateIsNotRecentAndLogItAsync(int minutes)
+        {
+            // given
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Customer randomCustomer = CreateRandomCustomer(randomDateTimeOffset);
+            randomCustomer.UpdatedDate = randomDateTimeOffset.AddMinutes(minutes);
+
+            var invalidCustomerException =
+                new InvalidCustomerException();
+
+            invalidCustomerException.AddData(
+                key: nameof(Customer.UpdatedDate),
+                values: "Date is not recent");
+
+            var expectedCustomerValidatonException =
+                new CustomerValidationException(invalidCustomerException);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                .Returns(randomDateTimeOffset);
+
+            // when
+            ValueTask<Customer> modifyCustomerTask =
+                this.customerService.ModifyCustomerAsync(randomCustomer);
+
+            CustomerValidationException actualCustomerValidationException =
+                await Assert.ThrowsAsync<CustomerValidationException>(
+                    modifyCustomerTask.AsTask);
+
+            // then
+            actualCustomerValidationException.Should().BeEquivalentTo(expectedCustomerValidatonException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerValidatonException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomerByIdAsync(It.IsAny<Guid>()),
+                    Times.Never);
+
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
         }
     }
 }
