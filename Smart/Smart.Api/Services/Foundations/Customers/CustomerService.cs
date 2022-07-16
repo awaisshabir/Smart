@@ -62,12 +62,15 @@ namespace Smart.Api.Services.Foundations.Customers
                 return await this.storageBroker.UpdateCustomerAsync(customer);
             });
 
-        public async ValueTask<Customer> RemoveCustomerByIdAsync(Guid customerId)
-        {
-            Customer maybeCustomer = await this.storageBroker
+        public ValueTask<Customer> RemoveCustomerByIdAsync(Guid customerId) =>
+            TryCatch(async () =>
+            {
+                ValidateCustomerId(customerId);
+
+                Customer maybeCustomer = await this.storageBroker
                     .SelectCustomerByIdAsync(customerId);
 
-            return await this.storageBroker.DeleteCustomerAsync(maybeCustomer);
-        }
+                return await this.storageBroker.DeleteCustomerAsync(maybeCustomer);
+            });
     }
 }
