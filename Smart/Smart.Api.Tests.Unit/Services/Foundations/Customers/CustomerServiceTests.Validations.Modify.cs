@@ -173,9 +173,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                 broker.SelectCustomerByIdAsync(invalidCustomer.Id),
                     Times.Never);
 
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
 
         [Theory]
@@ -279,8 +279,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                     expectedCustomerValidationException))),
                         Times.Once);
 
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
         }
 
@@ -338,8 +338,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                    expectedCustomerValidationException))),
                        Times.Once);
 
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
         }
 
@@ -395,8 +395,60 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                    expectedCustomerValidationException))),
                        Times.Once);
 
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowValidationExceptionOnModifyIfStorageUpdatedDateSameAsUpdatedDateAndLogItAsync()
+        {
+            // given
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Customer randomCustomer = CreateRandomModifyCustomer(randomDateTimeOffset);
+            Customer invalidCustomer = randomCustomer;
+            Customer storageCustomer = randomCustomer.DeepClone();
+
+            var invalidCustomerException = new InvalidCustomerException();
+
+            invalidCustomerException.AddData(
+                key: nameof(Customer.UpdatedDate),
+                values: $"Date is the same as {nameof(Customer.UpdatedDate)}");
+
+            var expectedCustomerValidationException =
+                new CustomerValidationException(invalidCustomerException);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectCustomerByIdAsync(invalidCustomer.Id))
+                .ReturnsAsync(storageCustomer);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
+            // when
+            ValueTask<Customer> modifyCustomerTask =
+                this.customerService.ModifyCustomerAsync(invalidCustomer);
+
+            // then
+            await Assert.ThrowsAsync<CustomerValidationException>(
+                modifyCustomerTask.AsTask);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomerByIdAsync(invalidCustomer.Id),
+                    Times.Once);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
         }
     }
