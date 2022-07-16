@@ -10,5 +10,6 @@ namespace Smart.Api.Brokers.Storages
         ValueTask<Product> InsertProductAsync(Product product);
         IQueryable<Product> SelectAllProducts();
         ValueTask<Product> SelectProductByIdAsync(Guid productId);
+        ValueTask<Product> UpdateProductAsync(Product product);
     }
 }
