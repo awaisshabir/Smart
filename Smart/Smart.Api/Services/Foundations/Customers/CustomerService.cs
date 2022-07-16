@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Smart.Api.Brokers.DateTimes;
@@ -33,5 +34,8 @@ namespace Smart.Api.Services.Foundations.Customers
 
         public IQueryable<Customer> RetrieveAllCustomers() =>
             TryCatch(() => this.storageBroker.SelectAllCustomers());
+
+        public ValueTask<Customer> RetrieveCustomerByIdAsync(Guid customerId) =>
+            throw new NotImplementedException();
     }
 }
