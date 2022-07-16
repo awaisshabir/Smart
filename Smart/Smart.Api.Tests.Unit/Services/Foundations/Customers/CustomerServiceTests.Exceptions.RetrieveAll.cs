@@ -49,5 +49,46 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
+
+        [Fact]
+        public void ShouldThrowServiceExceptionOnRetrieveAllIfServiceErrorOccursAndLogItAsync()
+        {
+            // given
+            string exceptionMessage = GetRandomMessage();
+            var serviceException = new Exception(exceptionMessage);
+
+            var failedCustomerServiceException =
+                new FailedCustomerServiceException(serviceException);
+
+            var expectedCustomerServiceException =
+                new CustomerServiceException(failedCustomerServiceException);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectAllCustomers())
+                    .Throws(serviceException);
+
+            // when
+            Action retrieveAllCustomersAction = () =>
+                this.customerService.RetrieveAllCustomers();
+
+            CustomerServiceException actualCustomerServiceException =
+                Assert.Throws<CustomerServiceException>(retrieveAllCustomersAction);
+
+            // then
+            actualCustomerServiceException.Should()
+                .BeEquivalentTo(expectedCustomerServiceException);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectAllCustomers(),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerServiceException))),
+                        Times.Once);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+        }
     }
 }
