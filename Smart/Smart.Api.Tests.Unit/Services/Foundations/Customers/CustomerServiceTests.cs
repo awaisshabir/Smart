@@ -1,5 +1,7 @@
 using System;
 using System.Linq.Expressions;
+using System.Runtime.Serialization;
+using Microsoft.Data.SqlClient;
 using Moq;
 using Smart.Api.Brokers.DateTimes;
 using Smart.Api.Brokers.Loggings;
@@ -46,6 +48,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             };
         }
 
+        private static SqlException GetSqlException() =>
+            (SqlException)FormatterServices.GetUninitializedObject(typeof(SqlException));
+
         private static int GetRandomNumber() =>
             new IntRange(min: 2, max: 10).GetValue();
 
@@ -54,6 +59,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
 
         private static DateTimeOffset GetRandomDateTimeOffset() =>
             new DateTimeRange(earliestDate: new DateTime()).GetValue();
+
+        private static Customer CreateRandomCustomer() =>
+            CreateCustomerFiller(dateTimeOffset: GetRandomDateTimeOffset()).Create();
 
         private static Customer CreateRandomCustomer(DateTimeOffset dateTimeOffset) =>
             CreateCustomerFiller(dateTimeOffset).Create();
