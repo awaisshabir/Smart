@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
@@ -83,6 +84,53 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             invalidProductException.AddData(
                 key: nameof(Product.UpdatedByUserId),
                 values: "Id is required");
+
+            var expectedProductValidationException =
+                new ProductValidationException(invalidProductException);
+
+            // when
+            ValueTask<Product> addProductTask =
+                this.productService.AddProductAsync(invalidProduct);
+
+            ProductValidationException actualProductValidationException =
+                await Assert.ThrowsAsync<ProductValidationException>(
+                    addProductTask.AsTask);
+
+            // then
+            actualProductValidationException.Should()
+                .BeEquivalentTo(expectedProductValidationException);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedProductValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.InsertProductAsync(It.IsAny<Product>()),
+                    Times.Never);
+
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowValidationExceptionOnAddIfCreateAndUpdateDatesIsNotSameAndLogItAsync()
+        {
+            // given
+            int randomNumber = GetRandomNumber();
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Product randomProduct = CreateRandomProduct(randomDateTimeOffset);
+            Product invalidProduct = randomProduct;
+
+            invalidProduct.UpdatedDate =
+                invalidProduct.CreatedDate.AddDays(randomNumber);
+
+            var invalidProductException = new InvalidProductException();
+
+            invalidProductException.AddData(
+                key: nameof(Product.UpdatedDate),
+                values: $"Date is not the same as {nameof(Product.CreatedDate)}");
 
             var expectedProductValidationException =
                 new ProductValidationException(invalidProductException);
