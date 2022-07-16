@@ -53,5 +53,48 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
+
+        [Fact]
+        public async Task ShouldThrowServiceExceptionOnRetrieveByIdIfServiceErrorOccursAndLogItAsync()
+        {
+            // given
+            Guid someId = Guid.NewGuid();
+            var serviceException = new Exception();
+
+            var failedCustomerServiceException =
+                new FailedCustomerServiceException(serviceException);
+
+            var expectedCustomerServiceException =
+                new CustomerServiceException(failedCustomerServiceException);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectCustomerByIdAsync(It.IsAny<Guid>()))
+                    .ThrowsAsync(serviceException);
+
+            // when
+            ValueTask<Customer> retrieveCustomerByIdTask =
+                this.customerService.RetrieveCustomerByIdAsync(someId);
+
+            CustomerServiceException actualCustomerServiceException =
+                await Assert.ThrowsAsync<CustomerServiceException>(
+                    retrieveCustomerByIdTask.AsTask);
+
+            // then
+            actualCustomerServiceException.Should()
+                .BeEquivalentTo(expectedCustomerServiceException);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomerByIdAsync(It.IsAny<Guid>()),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+               broker.LogError(It.Is(SameExceptionAs(
+                   expectedCustomerServiceException))),
+                        Times.Once);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
     }
 }
