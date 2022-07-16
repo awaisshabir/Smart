@@ -22,7 +22,7 @@ namespace Smart.Api.Services.Foundations.Products
             this.loggingBroker = loggingBroker;
         }
 
-        public ValueTask<Product> AddProductAsync(Product product) =>
-            throw new System.NotImplementedException();
+        public async ValueTask<Product> AddProductAsync(Product product) =>
+            await this.storageBroker.InsertProductAsync(product);
     }
 }
