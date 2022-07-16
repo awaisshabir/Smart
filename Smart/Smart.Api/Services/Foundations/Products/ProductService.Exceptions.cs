@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using EFxceptions.Models.Exceptions;
 using Microsoft.Data.SqlClient;
@@ -12,6 +13,7 @@ namespace Smart.Api.Services.Foundations.Products
     public partial class ProductService
     {
         private delegate ValueTask<Product> ReturningProductFunction();
+        private delegate IQueryable<Product> ReturningProductsFunction();
 
         private async ValueTask<Product> TryCatch(ReturningProductFunction returningProductFunction)
         {
@@ -61,6 +63,20 @@ namespace Smart.Api.Services.Foundations.Products
                     new FailedProductServiceException(exception);
 
                 throw CreateAndLogServiceException(failedProductServiceException);
+            }
+        }
+
+        private IQueryable<Product> TryCatch(ReturningProductsFunction returningProductsFunction)
+        {
+            try
+            {
+                return returningProductsFunction();
+            }
+            catch (SqlException sqlException)
+            {
+                var failedProductStorageException =
+                    new FailedProductStorageException(sqlException);
+                throw CreateAndLogCriticalDependencyException(failedProductStorageException);
             }
         }
 
