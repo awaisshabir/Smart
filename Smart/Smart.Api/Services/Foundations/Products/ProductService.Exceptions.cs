@@ -39,6 +39,13 @@ namespace Smart.Api.Services.Foundations.Products
 
                 throw CreateAndLogDependencyValidationException(alreadyExistsProductException);
             }
+            catch (ForeignKeyConstraintConflictException foreignKeyConstraintConflictException)
+            {
+                var invalidProductReferenceException =
+                    new InvalidProductReferenceException(foreignKeyConstraintConflictException);
+
+                throw CreateAndLogDependencyValidationException(invalidProductReferenceException);
+            }
         }
 
         private ProductValidationException CreateAndLogValidationException(Xeption exception)
