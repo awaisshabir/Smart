@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using EFxceptions.Models.Exceptions;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Smart.Api.Models.Products;
 using Smart.Api.Models.Products.Exceptions;
 using Xeptions;
@@ -46,6 +47,13 @@ namespace Smart.Api.Services.Foundations.Products
 
                 throw CreateAndLogDependencyValidationException(invalidProductReferenceException);
             }
+            catch (DbUpdateException databaseUpdateException)
+            {
+                var failedProductStorageException =
+                    new FailedProductStorageException(databaseUpdateException);
+
+                throw CreateAndLogDependecyException(failedProductStorageException);
+            }
         }
 
         private ProductValidationException CreateAndLogValidationException(Xeption exception)
@@ -74,6 +82,15 @@ namespace Smart.Api.Services.Foundations.Products
             this.loggingBroker.LogError(productDependencyValidationException);
 
             return productDependencyValidationException;
+        }
+
+        private ProductDependencyException CreateAndLogDependecyException(
+            Xeption exception)
+        {
+            var productDependencyException = new ProductDependencyException(exception);
+            this.loggingBroker.LogError(productDependencyException);
+
+            return productDependencyException;
         }
     }
 }
