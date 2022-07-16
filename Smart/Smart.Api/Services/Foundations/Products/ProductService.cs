@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Smart.Api.Brokers.DateTimes;
 using Smart.Api.Brokers.Loggings;
@@ -29,5 +30,8 @@ namespace Smart.Api.Services.Foundations.Products
 
                 return await this.storageBroker.InsertProductAsync(product);
             });
+
+        public IQueryable<Product> RetrieveAllProducts() =>
+            throw new System.NotImplementedException();
     }
 }

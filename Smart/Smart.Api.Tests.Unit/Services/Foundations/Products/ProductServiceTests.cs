@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Serialization;
 using Microsoft.Data.SqlClient;
@@ -62,6 +63,13 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
 
         private static DateTimeOffset GetRandomDateTimeOffset() =>
             new DateTimeRange(earliestDate: new DateTime()).GetValue();
+
+        private static IQueryable<Product> CreateRandomProducts()
+        {
+            return CreateProductFiller(dateTimeOffset: GetRandomDateTimeOffset())
+                .Create(count: GetRandomNumber())
+                    .AsQueryable();
+        }
 
         private static Product CreateRandomProduct() =>
             CreateProductFiller(dateTimeOffset: GetRandomDateTimeOffset()).Create();
