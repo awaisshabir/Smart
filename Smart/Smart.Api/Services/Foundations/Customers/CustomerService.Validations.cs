@@ -53,7 +53,9 @@ namespace Smart.Api.Services.Foundations.Customers
                     firstDate: customer.UpdatedDate,
                     secondDate: customer.CreatedDate,
                     secondDateName: nameof(Customer.CreatedDate)),
-                Parameter: nameof(Customer.UpdatedDate)));
+                Parameter: nameof(Customer.UpdatedDate)),
+
+                (Rule: IsNotRecent(customer.UpdatedDate), Parameter: nameof(customer.UpdatedDate)));
         }
 
         public void ValidateCustomerId(Guid customerId) =>
