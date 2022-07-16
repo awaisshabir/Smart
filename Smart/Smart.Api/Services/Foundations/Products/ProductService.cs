@@ -61,5 +61,8 @@ namespace Smart.Api.Services.Foundations.Products
 
                 return await this.storageBroker.UpdateProductAsync(product);
             });
+
+        public ValueTask<Product> RemoveProductByIdAsync(Guid productId) =>
+            throw new NotImplementedException();
     }
 }
