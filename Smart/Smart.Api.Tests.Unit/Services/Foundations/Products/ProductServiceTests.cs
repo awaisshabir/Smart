@@ -64,6 +64,17 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
         private static DateTimeOffset GetRandomDateTimeOffset() =>
             new DateTimeRange(earliestDate: new DateTime()).GetValue();
 
+        private static Product CreateRandomModifyProduct(DateTimeOffset dateTimeOffset)
+        {
+            int randomDaysInPast = GetRandomNegativeNumber();
+            Product randomProduct = CreateRandomProduct(dateTimeOffset);
+
+            randomProduct.CreatedDate =
+                randomProduct.CreatedDate.AddDays(randomDaysInPast);
+
+            return randomProduct;
+        }
+
         private static IQueryable<Product> CreateRandomProducts()
         {
             return CreateProductFiller(dateTimeOffset: GetRandomDateTimeOffset())
