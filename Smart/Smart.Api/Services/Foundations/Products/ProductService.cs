@@ -62,12 +62,15 @@ namespace Smart.Api.Services.Foundations.Products
                 return await this.storageBroker.UpdateProductAsync(product);
             });
 
-        public async ValueTask<Product> RemoveProductByIdAsync(Guid productId)
-        {
-            Product maybeProduct = await this.storageBroker
+        public ValueTask<Product> RemoveProductByIdAsync(Guid productId) =>
+            TryCatch(async () =>
+            {
+                ValidateProductId(productId);
+
+                Product maybeProduct = await this.storageBroker
                     .SelectProductByIdAsync(productId);
 
-            return await this.storageBroker.DeleteProductAsync(maybeProduct);
-        }
+                return await this.storageBroker.DeleteProductAsync(maybeProduct);
+            });
     }
 }
