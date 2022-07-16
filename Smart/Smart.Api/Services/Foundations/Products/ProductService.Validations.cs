@@ -77,6 +77,16 @@ namespace Smart.Api.Services.Foundations.Products
             }
         }
 
+        private static void ValidateAgainstStorageProductOnModify(Product inputProduct, Product storageProduct)
+        {
+            Validate(
+                (Rule: IsNotSame(
+                    firstDate: inputProduct.CreatedDate,
+                    secondDate: storageProduct.CreatedDate,
+                    secondDateName: nameof(Product.CreatedDate)),
+                Parameter: nameof(Product.CreatedDate)));
+        }
+
         private static dynamic IsInvalid(Guid id) => new
         {
             Condition = id == Guid.Empty,
