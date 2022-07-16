@@ -48,7 +48,12 @@ namespace Smart.Api.Services.Foundations.Customers
                 return maybeCustomer;
             });
 
-        public async ValueTask<Customer> ModifyCustomerAsync(Customer customer) =>
-            await this.storageBroker.UpdateCustomerAsync(customer);
+        public ValueTask<Customer> ModifyCustomerAsync(Customer customer) =>
+            TryCatch(async () =>
+            {
+                ValidateCustomerOnModify(customer);
+
+                return await this.storageBroker.UpdateCustomerAsync(customer);
+            });
     }
 }
