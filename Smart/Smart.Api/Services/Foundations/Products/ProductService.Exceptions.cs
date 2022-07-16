@@ -78,6 +78,13 @@ namespace Smart.Api.Services.Foundations.Products
                     new FailedProductStorageException(sqlException);
                 throw CreateAndLogCriticalDependencyException(failedProductStorageException);
             }
+            catch (Exception exception)
+            {
+                var failedProductServiceException =
+                    new FailedProductServiceException(exception);
+
+                throw CreateAndLogServiceException(failedProductServiceException);
+            }
         }
 
         private ProductValidationException CreateAndLogValidationException(Xeption exception)
