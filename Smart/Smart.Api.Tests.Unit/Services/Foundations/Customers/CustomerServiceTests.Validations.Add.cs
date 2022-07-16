@@ -27,8 +27,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                 this.customerService.AddCustomerAsync(nullCustomer);
 
             CustomerValidationException actualCustomerValidationException =
-                await Assert.ThrowsAsync<CustomerValidationException>(
-                    addCustomerTask.AsTask);
+                await Assert.ThrowsAsync<CustomerValidationException>(() =>
+                    addCustomerTask.AsTask());
 
             // then
             actualCustomerValidationException.Should()
@@ -93,12 +93,16 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                 this.customerService.AddCustomerAsync(invalidCustomer);
 
             CustomerValidationException actualCustomerValidationException =
-                await Assert.ThrowsAsync<CustomerValidationException>(
-                    addCustomerTask.AsTask);
+                await Assert.ThrowsAsync<CustomerValidationException>(() =>
+                    addCustomerTask.AsTask());
 
             // then
             actualCustomerValidationException.Should()
                 .BeEquivalentTo(expectedCustomerValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once());
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -135,17 +139,25 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             var expectedCustomerValidationException =
                 new CustomerValidationException(invalidCustomerException);
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             // when
             ValueTask<Customer> addCustomerTask =
                 this.customerService.AddCustomerAsync(invalidCustomer);
 
             CustomerValidationException actualCustomerValidationException =
-                await Assert.ThrowsAsync<CustomerValidationException>(
-                    addCustomerTask.AsTask);
+                await Assert.ThrowsAsync<CustomerValidationException>(() =>
+                    addCustomerTask.AsTask());
 
             // then
             actualCustomerValidationException.Should()
                 .BeEquivalentTo(expectedCustomerValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once());
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -156,9 +168,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                 broker.InsertCustomerAsync(It.IsAny<Customer>()),
                     Times.Never);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -180,17 +192,25 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             var expectedCustomerValidationException =
                 new CustomerValidationException(invalidCustomerException);
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             // when
             ValueTask<Customer> addCustomerTask =
                 this.customerService.AddCustomerAsync(invalidCustomer);
 
             CustomerValidationException actualCustomerValidationException =
-                await Assert.ThrowsAsync<CustomerValidationException>(
-                    addCustomerTask.AsTask);
+                await Assert.ThrowsAsync<CustomerValidationException>(() =>
+                    addCustomerTask.AsTask());
 
             // then
             actualCustomerValidationException.Should()
                 .BeEquivalentTo(expectedCustomerValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once());
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -239,8 +259,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
                 this.customerService.AddCustomerAsync(invalidCustomer);
 
             CustomerValidationException actualCustomerValidationException =
-                await Assert.ThrowsAsync<CustomerValidationException>(
-                    addCustomerTask.AsTask);
+                await Assert.ThrowsAsync<CustomerValidationException>(() =>
+                    addCustomerTask.AsTask());
 
             // then
             actualCustomerValidationException.Should()

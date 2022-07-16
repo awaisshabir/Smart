@@ -30,7 +30,9 @@ namespace Smart.Api.Services.Foundations.Customers
                     firstId: customer.UpdatedByUserId,
                     secondId: customer.CreatedByUserId,
                     secondIdName: nameof(Customer.CreatedByUserId)),
-                Parameter: nameof(Customer.UpdatedByUserId)));
+                Parameter: nameof(Customer.UpdatedByUserId)),
+
+                (Rule: IsNotRecent(customer.CreatedDate), Parameter: nameof(Customer.CreatedDate)));
         }
 
         private static void ValidateCustomerIsNotNull(Customer customer)
@@ -70,6 +72,23 @@ namespace Smart.Api.Services.Foundations.Customers
                 Condition = firstId != secondId,
                 Message = $"Id is not the same as {secondIdName}"
             };
+
+        private dynamic IsNotRecent(DateTimeOffset date) => new
+        {
+            Condition = IsDateNotRecent(date),
+            Message = "Date is not recent"
+        };
+
+        private bool IsDateNotRecent(DateTimeOffset date)
+        {
+            DateTimeOffset currentDateTime =
+                this.dateTimeBroker.GetCurrentDateTimeOffset();
+
+            TimeSpan timeDifference = currentDateTime.Subtract(date);
+            TimeSpan oneMinute = TimeSpan.FromMinutes(1);
+
+            return timeDifference.Duration() > oneMinute;
+        }
 
         private static void Validate(params (dynamic Rule, string Parameter)[] validations)
         {
