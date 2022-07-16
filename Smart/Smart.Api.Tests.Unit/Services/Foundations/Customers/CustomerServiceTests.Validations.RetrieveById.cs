@@ -51,5 +51,47 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customers
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
+
+        [Fact]
+        public async Task ShouldThrowNotFoundExceptionOnRetrieveByIdIfCustomerIsNotFoundAndLogItAsync()
+        {
+            //given
+            Guid someCustomerId = Guid.NewGuid();
+            Customer noCustomer = null;
+
+            var notFoundCustomerException =
+                new NotFoundCustomerException(someCustomerId);
+
+            var expectedCustomerValidationException =
+                new CustomerValidationException(notFoundCustomerException);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectCustomerByIdAsync(It.IsAny<Guid>()))
+                    .ReturnsAsync(noCustomer);
+
+            //when
+            ValueTask<Customer> retrieveCustomerByIdTask =
+                this.customerService.RetrieveCustomerByIdAsync(someCustomerId);
+
+            CustomerValidationException actualCustomerValidationException =
+                await Assert.ThrowsAsync<CustomerValidationException>(
+                    retrieveCustomerByIdTask.AsTask);
+
+            //then
+            actualCustomerValidationException.Should().BeEquivalentTo(expectedCustomerValidationException);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomerByIdAsync(It.IsAny<Guid>()),
+                    Times.Once());
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomerValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
     }
 }
