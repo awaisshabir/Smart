@@ -106,7 +106,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                     modifyProductTask.AsTask);
 
             //then
-            actualProductValidationException.Should().BeEquivalentTo(expectedProductValidationException);
+            actualProductValidationException.Should()
+                .BeEquivalentTo(expectedProductValidationException);
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -147,7 +148,8 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
                     modifyProductTask.AsTask);
 
             // then
-            actualProductValidationException.Should().BeEquivalentTo(expectedProductValidationException);
+            actualProductValidationException.Should()
+                .BeEquivalentTo(expectedProductValidationException);
 
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
@@ -161,6 +163,58 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Products
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Theory]
+        [MemberData(nameof(MinutesBeforeOrAfter))]
+        public async Task ShouldThrowValidationExceptionOnModifyIfUpdatedDateIsNotRecentAndLogItAsync(int minutes)
+        {
+            // given
+            DateTimeOffset randomDateTimeOffset = GetRandomDateTimeOffset();
+            Product randomProduct = CreateRandomProduct(randomDateTimeOffset);
+            randomProduct.UpdatedDate = randomDateTimeOffset.AddMinutes(minutes);
+
+            var invalidProductException =
+                new InvalidProductException();
+
+            invalidProductException.AddData(
+                key: nameof(Product.UpdatedDate),
+                values: "Date is not recent");
+
+            var expectedProductValidatonException =
+                new ProductValidationException(invalidProductException);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                .Returns(randomDateTimeOffset);
+
+            // when
+            ValueTask<Product> modifyProductTask =
+                this.productService.ModifyProductAsync(randomProduct);
+
+            ProductValidationException actualProductValidationException =
+                await Assert.ThrowsAsync<ProductValidationException>(
+                    modifyProductTask.AsTask);
+
+            // then
+            actualProductValidationException.Should().BeEquivalentTo(expectedProductValidatonException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedProductValidatonException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectProductByIdAsync(It.IsAny<Guid>()),
+                    Times.Never);
+
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
         }
     }
 }
