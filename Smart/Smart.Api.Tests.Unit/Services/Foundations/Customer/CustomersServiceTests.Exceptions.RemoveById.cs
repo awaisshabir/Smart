@@ -1,6 +1,8 @@
+using System;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using Smart.Api.Models.Customer;
 using Smart.Api.Models.Customer.Exceptions;
@@ -54,6 +56,55 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
 
             this.dateTimeBrokerMock.Verify(broker =>
                 broker.GetCurrentDateTimeOffset(),
+                    Times.Never);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowDependencyValidationOnRemoveIfDatabaseUpdateConcurrencyErrorOccursAndLogItAsync()
+        {
+            // given
+            Guid someCustomersId = Guid.NewGuid();
+
+            var databaseUpdateConcurrencyException =
+                new DbUpdateConcurrencyException();
+
+            var lockedCustomersException =
+                new LockedCustomersException(databaseUpdateConcurrencyException);
+
+            var expectedCustomersDependencyValidationException =
+                new CustomersDependencyValidationException(lockedCustomersException);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectCustomersByIdAsync(It.IsAny<Guid>()))
+                    .ThrowsAsync(databaseUpdateConcurrencyException);
+
+            // when
+            ValueTask<Customers> removeCustomersByIdTask =
+                this.customersService.RemoveCustomersByIdAsync(someCustomersId);
+
+            CustomersDependencyValidationException actualCustomersDependencyValidationException =
+                await Assert.ThrowsAsync<CustomersDependencyValidationException>(
+                    removeCustomersByIdTask.AsTask);
+
+            // then
+            actualCustomersDependencyValidationException.Should()
+                .BeEquivalentTo(expectedCustomersDependencyValidationException);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomersByIdAsync(It.IsAny<Guid>()),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomersDependencyValidationException))),
+                        Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.DeleteCustomersAsync(It.IsAny<Customers>()),
                     Times.Never);
 
             this.storageBrokerMock.VerifyNoOtherCalls();
