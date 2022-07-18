@@ -39,6 +39,13 @@ namespace Smart.Api.Services.Foundations.Customer
 
                 throw CreateAndLogDependencyValidationException(alreadyExistsCustomersException);
             }
+            catch (ForeignKeyConstraintConflictException foreignKeyConstraintConflictException)
+            {
+                var invalidCustomersReferenceException =
+                    new InvalidCustomersReferenceException(foreignKeyConstraintConflictException);
+
+                throw CreateAndLogDependencyValidationException(invalidCustomersReferenceException);
+            }
         }
 
         private CustomersValidationException CreateAndLogValidationException(Xeption exception)
