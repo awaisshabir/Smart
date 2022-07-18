@@ -24,7 +24,13 @@ namespace Smart.Api.Services.Foundations.Customer
                     firstDate: customers.UpdatedDate,
                     secondDate: customers.CreatedDate,
                     secondDateName: nameof(Customers.CreatedDate)),
-                Parameter: nameof(Customers.UpdatedDate)));
+                Parameter: nameof(Customers.UpdatedDate)),
+
+                (Rule: IsNotSame(
+                    firstId: customers.UpdatedByUserId,
+                    secondId: customers.CreatedByUserId,
+                    secondIdName: nameof(Customers.CreatedByUserId)),
+                Parameter: nameof(Customers.UpdatedByUserId)));
         }
 
         private static void ValidateCustomersIsNotNull(Customers customers)
@@ -54,6 +60,15 @@ namespace Smart.Api.Services.Foundations.Customer
             {
                 Condition = firstDate != secondDate,
                 Message = $"Date is not the same as {secondDateName}"
+            };
+
+        private static dynamic IsNotSame(
+            Guid firstId,
+            Guid secondId,
+            string secondIdName) => new
+            {
+                Condition = firstId != secondId,
+                Message = $"Id is not the same as {secondIdName}"
             };
 
         private static void Validate(params (dynamic Rule, string Parameter)[] validations)
