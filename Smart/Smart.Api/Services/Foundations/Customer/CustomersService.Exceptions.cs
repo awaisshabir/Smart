@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Smart.Api.Models.Customer;
 using Smart.Api.Models.Customer.Exceptions;
 using Xeptions;
@@ -23,6 +24,13 @@ namespace Smart.Api.Services.Foundations.Customer
             {
                 throw CreateAndLogValidationException(invalidCustomersException);
             }
+            catch (SqlException sqlException)
+            {
+                var failedCustomersStorageException =
+                    new FailedCustomersStorageException(sqlException);
+
+                throw CreateAndLogCriticalDependencyException(failedCustomersStorageException);
+            }
         }
 
         private CustomersValidationException CreateAndLogValidationException(Xeption exception)
@@ -33,6 +41,14 @@ namespace Smart.Api.Services.Foundations.Customer
             this.loggingBroker.LogError(customersValidationException);
 
             return customersValidationException;
+        }
+
+        private CustomersDependencyException CreateAndLogCriticalDependencyException(Xeption exception)
+        {
+            var customersDependencyException = new CustomersDependencyException(exception);
+            this.loggingBroker.LogCritical(customersDependencyException);
+
+            return customersDependencyException;
         }
     }
 }
