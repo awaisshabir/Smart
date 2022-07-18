@@ -23,5 +23,13 @@ namespace Smart.Api.Brokers.Storages
 
             return suppliersEntityEntry.Entity;
         }
+
+        public IQueryable<Suppliers> SelectAllSupplier()
+        {
+            using var broker =
+                new StorageBroker(this.configuration);
+
+            return broker.Supplier;
+        }
     }
 }
