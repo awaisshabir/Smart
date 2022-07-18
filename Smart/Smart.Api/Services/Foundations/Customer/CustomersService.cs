@@ -35,7 +35,7 @@ namespace Smart.Api.Services.Foundations.Customer
         public IQueryable<Customers> RetrieveAllCustomer() =>
             TryCatch(() => this.storageBroker.SelectAllCustomer());
 
-        public ValueTask<Customers> RetrieveCustomersByIdAsync(Guid customersId) =>
-            throw new NotImplementedException();
+        public async ValueTask<Customers> RetrieveCustomersByIdAsync(Guid customersId) =>
+            await this.storageBroker.SelectCustomersByIdAsync(customersId);
     }
 }
