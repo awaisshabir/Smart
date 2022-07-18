@@ -11,5 +11,6 @@ namespace Smart.Api.Brokers.Storages
         IQueryable<Customers> SelectAllCustomer();
         ValueTask<Customers> SelectCustomersByIdAsync(Guid customersId);
         ValueTask<Customers> UpdateCustomersAsync(Customers customers);
+        ValueTask<Customers> DeleteCustomersAsync(Customers customers);
     }
 }
