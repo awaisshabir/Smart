@@ -22,7 +22,12 @@ namespace Smart.Api.Services.Foundations.Customer
             this.loggingBroker = loggingBroker;
         }
 
-        public async ValueTask<Customers> AddCustomersAsync(Customers customers) =>
-            await this.storageBroker.InsertCustomersAsync(customers);
+        public ValueTask<Customers> AddCustomersAsync(Customers customers) =>
+            TryCatch(async () =>
+            {
+                ValidateCustomersOnAdd(customers);
+
+                return await this.storageBroker.InsertCustomersAsync(customers);
+            });
     }
 }
