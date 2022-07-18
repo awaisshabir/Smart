@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Serialization;
 using Microsoft.Data.SqlClient;
@@ -62,6 +63,13 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
 
         private static DateTimeOffset GetRandomDateTimeOffset() =>
             new DateTimeRange(earliestDate: new DateTime()).GetValue();
+
+        private static IQueryable<Customers> CreateRandomCustomer()
+        {
+            return CreateCustomersFiller(dateTimeOffset: GetRandomDateTimeOffset())
+                .Create(count: GetRandomNumber())
+                    .AsQueryable();
+        }
 
         private static Customers CreateRandomCustomers() =>
             CreateCustomersFiller(dateTimeOffset: GetRandomDateTimeOffset()).Create();
