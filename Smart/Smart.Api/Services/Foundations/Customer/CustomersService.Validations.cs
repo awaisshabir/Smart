@@ -35,6 +35,9 @@ namespace Smart.Api.Services.Foundations.Customer
                 (Rule: IsNotRecent(customers.CreatedDate), Parameter: nameof(Customers.CreatedDate)));
         }
 
+        public void ValidateCustomersId(Guid customersId) =>
+            Validate((Rule: IsInvalid(customersId), Parameter: nameof(Customers.Id)));
+
         private static void ValidateCustomersIsNotNull(Customers customers)
         {
             if (customers is null)
