@@ -1,0 +1,57 @@
+using System;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Microsoft.Data.SqlClient;
+using Moq;
+using Smart.Api.Models.Customer;
+using Smart.Api.Models.Customer.Exceptions;
+using Xunit;
+
+namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
+{
+    public partial class CustomersServiceTests
+    {
+        [Fact]
+        public async Task ShouldThrowCriticalDependencyExceptionOnRetrieveByIdIfSqlErrorOccursAndLogItAsync()
+        {
+            // given
+            Guid someId = Guid.NewGuid();
+            SqlException sqlException = GetSqlException();
+
+            var failedCustomersStorageException =
+                new FailedCustomersStorageException(sqlException);
+
+            var expectedCustomersDependencyException =
+                new CustomersDependencyException(failedCustomersStorageException);
+
+            this.storageBrokerMock.Setup(broker =>
+                broker.SelectCustomersByIdAsync(It.IsAny<Guid>()))
+                    .ThrowsAsync(sqlException);
+
+            // when
+            ValueTask<Customers> retrieveCustomersByIdTask =
+                this.customersService.RetrieveCustomersByIdAsync(someId);
+
+            CustomersDependencyException actualCustomersDependencyException =
+                await Assert.ThrowsAsync<CustomersDependencyException>(
+                    retrieveCustomersByIdTask.AsTask);
+
+            // then
+            actualCustomersDependencyException.Should()
+                .BeEquivalentTo(expectedCustomersDependencyException);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.SelectCustomersByIdAsync(It.IsAny<Guid>()),
+                    Times.Once);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogCritical(It.Is(SameExceptionAs(
+                    expectedCustomersDependencyException))),
+                        Times.Once);
+
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+        }
+    }
+}
