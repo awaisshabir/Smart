@@ -39,5 +39,18 @@ namespace Smart.Api.Brokers.Storages
 
             return await broker.Supplier.FindAsync(suppliersId);
         }
+
+        public async ValueTask<Suppliers> UpdateSuppliersAsync(Suppliers suppliers)
+        {
+            using var broker =
+                new StorageBroker(this.configuration);
+
+            EntityEntry<Suppliers> suppliersEntityEntry =
+                broker.Supplier.Update(suppliers);
+
+            await broker.SaveChangesAsync();
+
+            return suppliersEntityEntry.Entity;
+        }
     }
 }
