@@ -31,5 +31,13 @@ namespace Smart.Api.Brokers.Storages
 
             return broker.Customer;
         }
+
+        public async ValueTask<Customers> SelectCustomersByIdAsync(Guid customersId)
+        {
+            using var broker =
+                new StorageBroker(this.configuration);
+
+            return await broker.Customer.FindAsync(customersId);
+        }
     }
 }

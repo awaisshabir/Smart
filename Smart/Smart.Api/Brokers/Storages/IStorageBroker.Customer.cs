@@ -9,5 +9,6 @@ namespace Smart.Api.Brokers.Storages
     {
         ValueTask<Customers> InsertCustomersAsync(Customers customers);
         IQueryable<Customers> SelectAllCustomer();
+        ValueTask<Customers> SelectCustomersByIdAsync(Guid customersId);
     }
 }
