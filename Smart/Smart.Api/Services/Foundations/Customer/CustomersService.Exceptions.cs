@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using EFxceptions.Models.Exceptions;
 using Microsoft.Data.SqlClient;
@@ -54,6 +55,13 @@ namespace Smart.Api.Services.Foundations.Customer
 
                 throw CreateAndLogDependecyException(failedCustomersStorageException);
             }
+            catch (Exception exception)
+            {
+                var failedCustomersServiceException =
+                    new FailedCustomersServiceException(exception);
+
+                throw CreateAndLogServiceException(failedCustomersServiceException);
+            }
         }
 
         private CustomersValidationException CreateAndLogValidationException(Xeption exception)
@@ -91,6 +99,15 @@ namespace Smart.Api.Services.Foundations.Customer
             this.loggingBroker.LogError(customersDependencyException);
 
             return customersDependencyException;
+        }
+
+        private CustomersServiceException CreateAndLogServiceException(
+            Xeption exception)
+        {
+            var customersServiceException = new CustomersServiceException(exception);
+            this.loggingBroker.LogError(customersServiceException);
+
+            return customersServiceException;
         }
     }
 }
