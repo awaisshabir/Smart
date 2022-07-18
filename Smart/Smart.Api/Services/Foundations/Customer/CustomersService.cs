@@ -70,6 +70,8 @@ namespace Smart.Api.Services.Foundations.Customer
                 Customers maybeCustomers = await this.storageBroker
                     .SelectCustomersByIdAsync(customersId);
 
+                ValidateStorageCustomers(maybeCustomers, customersId);
+
                 return await this.storageBroker.DeleteCustomersAsync(maybeCustomers);
             });
     }
