@@ -61,5 +61,8 @@ namespace Smart.Api.Services.Foundations.Customer
 
                 return await this.storageBroker.UpdateCustomersAsync(customers);
             });
+
+        public ValueTask<Customers> RemoveCustomersByIdAsync(Guid customersId) =>
+            throw new NotImplementedException();
     }
 }
