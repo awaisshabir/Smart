@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using EFxceptions.Models.Exceptions;
 using Microsoft.Data.SqlClient;
 using Smart.Api.Models.Customer;
 using Smart.Api.Models.Customer.Exceptions;
@@ -31,6 +32,13 @@ namespace Smart.Api.Services.Foundations.Customer
 
                 throw CreateAndLogCriticalDependencyException(failedCustomersStorageException);
             }
+            catch (DuplicateKeyException duplicateKeyException)
+            {
+                var alreadyExistsCustomersException =
+                    new AlreadyExistsCustomersException(duplicateKeyException);
+
+                throw CreateAndLogDependencyValidationException(alreadyExistsCustomersException);
+            }
         }
 
         private CustomersValidationException CreateAndLogValidationException(Xeption exception)
@@ -49,6 +57,16 @@ namespace Smart.Api.Services.Foundations.Customer
             this.loggingBroker.LogCritical(customersDependencyException);
 
             return customersDependencyException;
+        }
+
+        private CustomersDependencyValidationException CreateAndLogDependencyValidationException(Xeption exception)
+        {
+            var customersDependencyValidationException =
+                new CustomersDependencyValidationException(exception);
+
+            this.loggingBroker.LogError(customersDependencyValidationException);
+
+            return customersDependencyValidationException;
         }
     }
 }
