@@ -109,6 +109,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
             actualCustomersValidationException.Should()
                 .BeEquivalentTo(expectedCustomersValidationException);
 
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
                     expectedCustomersValidationException))),
@@ -118,9 +122,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
                 broker.UpdateCustomersAsync(It.IsAny<Customers>()),
                     Times.Never);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -139,6 +143,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
             var expectedCustomersValidationException =
                 new CustomersValidationException(invalidCustomersException);
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             // when
             ValueTask<Customers> modifyCustomersTask =
                 this.customersService.ModifyCustomersAsync(invalidCustomers);
@@ -151,6 +159,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
             actualCustomersValidationException.Should()
                 .BeEquivalentTo(expectedCustomersValidationException);
 
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogError(It.Is(SameExceptionAs(
                     expectedCustomersValidationException))),
@@ -160,9 +172,9 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
                 broker.SelectCustomersByIdAsync(invalidCustomers.Id),
                     Times.Never);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
 
         [Theory]

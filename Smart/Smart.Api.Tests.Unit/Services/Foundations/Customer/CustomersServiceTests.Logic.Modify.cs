@@ -23,6 +23,10 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
             Customers expectedCustomers = updatedCustomers.DeepClone();
             Guid customersId = inputCustomers.Id;
 
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Returns(randomDateTimeOffset);
+
             this.storageBrokerMock.Setup(broker =>
                 broker.UpdateCustomersAsync(inputCustomers))
                     .ReturnsAsync(updatedCustomers);
@@ -34,13 +38,17 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
             // then
             actualCustomers.Should().BeEquivalentTo(expectedCustomers);
 
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
             this.storageBrokerMock.Verify(broker =>
                 broker.UpdateCustomersAsync(inputCustomers),
                     Times.Once);
 
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
             this.storageBrokerMock.VerifyNoOtherCalls();
             this.loggingBrokerMock.VerifyNoOtherCalls();
-            this.dateTimeBrokerMock.VerifyNoOtherCalls();
         }
     }
 }
