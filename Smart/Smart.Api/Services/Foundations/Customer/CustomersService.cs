@@ -47,5 +47,8 @@ namespace Smart.Api.Services.Foundations.Customer
 
                 return maybeCustomers;
             });
+
+        public ValueTask<Customers> ModifyCustomersAsync(Customers customers) =>
+            throw new NotImplementedException();
     }
 }

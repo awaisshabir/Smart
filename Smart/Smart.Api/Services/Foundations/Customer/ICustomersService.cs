@@ -10,5 +10,6 @@ namespace Smart.Api.Services.Foundations.Customer
         ValueTask<Customers> AddCustomersAsync(Customers customers);
         IQueryable<Customers> RetrieveAllCustomer();
         ValueTask<Customers> RetrieveCustomersByIdAsync(Guid customersId);
+        ValueTask<Customers> ModifyCustomersAsync(Customers customers);
     }
 }
