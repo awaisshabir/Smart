@@ -38,6 +38,16 @@ namespace Smart.Api.Services.Foundations.Customer
         private void ValidateCustomersOnModify(Customers customers)
         {
             ValidateCustomersIsNotNull(customers);
+
+            Validate(
+                (Rule: IsInvalid(customers.Id), Parameter: nameof(Customers.Id)),
+
+                // TODO: Add any other required validation rules
+
+                (Rule: IsInvalid(customers.CreatedDate), Parameter: nameof(Customers.CreatedDate)),
+                (Rule: IsInvalid(customers.CreatedByUserId), Parameter: nameof(Customers.CreatedByUserId)),
+                (Rule: IsInvalid(customers.UpdatedDate), Parameter: nameof(Customers.UpdatedDate)),
+                (Rule: IsInvalid(customers.UpdatedByUserId), Parameter: nameof(Customers.UpdatedByUserId)));
         }
 
         public void ValidateCustomersId(Guid customersId) =>
