@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using EFxceptions.Models.Exceptions;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Smart.Api.Models.Customer;
 using Smart.Api.Models.Customer.Exceptions;
 using Xeptions;
@@ -46,6 +47,13 @@ namespace Smart.Api.Services.Foundations.Customer
 
                 throw CreateAndLogDependencyValidationException(invalidCustomersReferenceException);
             }
+            catch (DbUpdateException databaseUpdateException)
+            {
+                var failedCustomersStorageException =
+                    new FailedCustomersStorageException(databaseUpdateException);
+
+                throw CreateAndLogDependecyException(failedCustomersStorageException);
+            }
         }
 
         private CustomersValidationException CreateAndLogValidationException(Xeption exception)
@@ -74,6 +82,15 @@ namespace Smart.Api.Services.Foundations.Customer
             this.loggingBroker.LogError(customersDependencyValidationException);
 
             return customersDependencyValidationException;
+        }
+
+        private CustomersDependencyException CreateAndLogDependecyException(
+            Xeption exception)
+        {
+            var customersDependencyException = new CustomersDependencyException(exception);
+            this.loggingBroker.LogError(customersDependencyException);
+
+            return customersDependencyException;
         }
     }
 }
