@@ -8,5 +8,6 @@ namespace Smart.Api.Brokers.Storages
     public partial interface IStorageBroker
     {
         ValueTask<Customers> InsertCustomersAsync(Customers customers);
+        IQueryable<Customers> SelectAllCustomer();
     }
 }
