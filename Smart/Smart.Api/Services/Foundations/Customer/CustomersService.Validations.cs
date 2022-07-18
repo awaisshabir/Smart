@@ -38,6 +38,14 @@ namespace Smart.Api.Services.Foundations.Customer
         public void ValidateCustomersId(Guid customersId) =>
             Validate((Rule: IsInvalid(customersId), Parameter: nameof(Customers.Id)));
 
+        private static void ValidateStorageCustomers(Customers maybeCustomers, Guid customersId)
+        {
+            if (maybeCustomers is null)
+            {
+                throw new NotFoundCustomersException(customersId);
+            }
+        }
+
         private static void ValidateCustomersIsNotNull(Customers customers)
         {
             if (customers is null)

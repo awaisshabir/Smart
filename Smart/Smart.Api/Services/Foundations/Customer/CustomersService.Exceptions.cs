@@ -36,6 +36,10 @@ namespace Smart.Api.Services.Foundations.Customer
 
                 throw CreateAndLogCriticalDependencyException(failedCustomersStorageException);
             }
+            catch (NotFoundCustomersException notFoundCustomersException)
+            {
+                throw CreateAndLogValidationException(notFoundCustomersException);
+            }
             catch (DuplicateKeyException duplicateKeyException)
             {
                 var alreadyExistsCustomersException =
