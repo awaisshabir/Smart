@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using EFxceptions.Models.Exceptions;
 using FluentAssertions;
 using Microsoft.Data.SqlClient;
 using Moq;
@@ -50,6 +51,57 @@ namespace Smart.Api.Tests.Unit.Services.Foundations.Customer
             this.loggingBrokerMock.Verify(broker =>
                 broker.LogCritical(It.Is(SameExceptionAs(
                     expectedCustomersDependencyException))),
+                        Times.Once);
+
+            this.dateTimeBrokerMock.VerifyNoOtherCalls();
+            this.storageBrokerMock.VerifyNoOtherCalls();
+            this.loggingBrokerMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task ShouldThrowDependencyValidationExceptionOnAddIfCustomersAlreadyExsitsAndLogItAsync()
+        {
+            // given
+            Customers randomCustomers = CreateRandomCustomers();
+            Customers alreadyExistsCustomers = randomCustomers;
+            string randomMessage = GetRandomMessage();
+
+            var duplicateKeyException =
+                new DuplicateKeyException(randomMessage);
+
+            var alreadyExistsCustomersException =
+                new AlreadyExistsCustomersException(duplicateKeyException);
+
+            var expectedCustomersDependencyValidationException =
+                new CustomersDependencyValidationException(alreadyExistsCustomersException);
+
+            this.dateTimeBrokerMock.Setup(broker =>
+                broker.GetCurrentDateTimeOffset())
+                    .Throws(duplicateKeyException);
+
+            // when
+            ValueTask<Customers> addCustomersTask =
+                this.customersService.AddCustomersAsync(alreadyExistsCustomers);
+
+            // then
+            CustomersDependencyValidationException actualCustomersDependencyValidationException =
+                await Assert.ThrowsAsync<CustomersDependencyValidationException>(
+                    addCustomersTask.AsTask);
+
+            actualCustomersDependencyValidationException.Should()
+                .BeEquivalentTo(expectedCustomersDependencyValidationException);
+
+            this.dateTimeBrokerMock.Verify(broker =>
+                broker.GetCurrentDateTimeOffset(),
+                    Times.Once);
+
+            this.storageBrokerMock.Verify(broker =>
+                broker.InsertCustomersAsync(It.IsAny<Customers>()),
+                    Times.Never);
+
+            this.loggingBrokerMock.Verify(broker =>
+                broker.LogError(It.Is(SameExceptionAs(
+                    expectedCustomersDependencyValidationException))),
                         Times.Once);
 
             this.dateTimeBrokerMock.VerifyNoOtherCalls();
