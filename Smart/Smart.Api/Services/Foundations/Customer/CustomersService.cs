@@ -32,6 +32,6 @@ namespace Smart.Api.Services.Foundations.Customer
             });
 
         public IQueryable<Customers> RetrieveAllCustomer() =>
-            this.storageBroker.SelectAllCustomer();
+            TryCatch(() => this.storageBroker.SelectAllCustomer());
     }
 }
