@@ -47,7 +47,13 @@ namespace Smart.Api.Services.Foundations.Customer
                 (Rule: IsInvalid(customers.CreatedDate), Parameter: nameof(Customers.CreatedDate)),
                 (Rule: IsInvalid(customers.CreatedByUserId), Parameter: nameof(Customers.CreatedByUserId)),
                 (Rule: IsInvalid(customers.UpdatedDate), Parameter: nameof(Customers.UpdatedDate)),
-                (Rule: IsInvalid(customers.UpdatedByUserId), Parameter: nameof(Customers.UpdatedByUserId)));
+                (Rule: IsInvalid(customers.UpdatedByUserId), Parameter: nameof(Customers.UpdatedByUserId)),
+
+                (Rule: IsSame(
+                    firstDate: customers.UpdatedDate,
+                    secondDate: customers.CreatedDate,
+                    secondDateName: nameof(Customers.CreatedDate)),
+                Parameter: nameof(Customers.UpdatedDate)));
         }
 
         public void ValidateCustomersId(Guid customersId) =>
@@ -80,6 +86,15 @@ namespace Smart.Api.Services.Foundations.Customer
             Condition = date == default,
             Message = "Date is required"
         };
+
+        private static dynamic IsSame(
+            DateTimeOffset firstDate,
+            DateTimeOffset secondDate,
+            string secondDateName) => new
+            {
+                Condition = firstDate == secondDate,
+                Message = $"Date is the same as {secondDateName}"
+            };
 
         private static dynamic IsNotSame(
             DateTimeOffset firstDate,
